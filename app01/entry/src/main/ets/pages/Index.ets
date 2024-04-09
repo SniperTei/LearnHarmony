@@ -1,3 +1,5 @@
+import promptAction from '@ohos.promptAction';
+
 @Entry
 @Component
 struct Index {
@@ -13,6 +15,19 @@ struct Index {
         Text($r('app.string.hello_text'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
+        TextInput({placeholder: "please input username"})
+          .style(TextInputStyle.Default)
+          .width(300)
+        TextInput({placeholder: "please input password"})
+          .style(TextInputStyle.Default)
+          .type(InputType.Password)
+          .width(300)
+          .maxLength(24)
+        Button("Login", {type: ButtonType.Capsule, stateEffect: true})
+          .onClick(() => {
+            // toast login success
+            promptAction.showToast({message: "Login Success"})
+          })
       }
       .width('100%')
     }
