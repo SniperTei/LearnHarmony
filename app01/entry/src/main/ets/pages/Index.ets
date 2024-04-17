@@ -7,6 +7,13 @@ struct Index {
 
   @State imgWidth: number = 30
 
+  @State strSelectedDate: string = '1900-01-01'
+
+  @State datePickerVisibleFlag: boolean = false
+
+  @State isLunar: boolean = false
+  private selectedDate: Date = new Date('2021-08-08')
+
   build() {
     Row() {
       Column() {
@@ -78,7 +85,37 @@ struct Index {
           Text('Checkbox3').fontSize(14).lineHeight(20).fontColor('#182431').fontWeight(500)
         }.margin({ left: 36 }).backgroundColor('#00ff00')
         */
-        DataPanel({values:[3, 3, 3, 1], max: 10, type: DataPanelType.Line}).height(20)
+        DataPanel({values:[3, 3, 3, 1], max: 10, type: DataPanelType.Line}).height(10)
+        Button('select date').onClick(() => {
+          // 展示datepicker
+          this.datePickerVisibleFlag = !this.datePickerVisibleFlag
+        })
+        Text(this.strSelectedDate)
+        Slider({min: 0, max: 10, value: 6})
+          .blockColor('#36d')
+          .showTips(true)
+          .trackThickness(10)
+          .width(300)
+          .onChange((value) => {
+            console.log('change value : ', value)
+          })
+        DatePicker({
+          start: new Date('1970-1-1'),
+          end: new Date('2100-1-1'),
+          selected: this.selectedDate
+        })
+          .lunar(this.isLunar)
+          .onChange((value: DatePickerResult) => {
+            // this.selectedDate.setFullYear(value.year, value.month, value.day)
+            console.info('select current date is: ' + JSON.stringify(value))
+          })
+        // DatePicker().visibility(this.datePickerVisibleFlag ? Visibility.Visible : Visibility.Hidden)
+        //   .onChange((date) => {
+        //     // 打印选中的日期
+        //     console.info('select current date is: ' + JSON.stringify(date))
+        //     // this.strSelectedDate = date.year + "-" + date.month + "-" + date.day
+        //     // this.datePickerVisibleFlag = false
+        //   })
       }
       .width('100%')
     }
