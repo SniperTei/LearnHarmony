@@ -11,6 +11,19 @@ import { ComponentResult } from './ComponentResult'
 export class PluginPageSupport {
   private static resolver: ((result: ComponentResult) => void) | null = null
   private static storedParams: Record<string, Object> = {}
+  private static routerInstance: router.Router | null = null
+
+  /** 初始化，由页面组件在 aboutToAppear 中调用 */
+  static init(routerInstance: router.Router): void {
+    PluginPageSupport.routerInstance = routerInstance
+  }
+
+  private static getRouter(): router.Router {
+    if (!PluginPageSupport.routerInstance) {
+      throw new Error('PluginPageSupport 未初始化，请先调用 init(router)')
+    }
+    return PluginPageSupport.routerInstance
+  }
 
   // === Plugin 端 ===
 
@@ -24,7 +37,7 @@ export class PluginPageSupport {
     return new Promise<ComponentResult>((resolve) => {
       PluginPageSupport.resolver = resolve
       PluginPageSupport.storedParams = params ?? {}
-      router.pushUrl({ url: `pages/${url}` })
+      PluginPageSupport.getRouter().pushUrl({ url: `pages/${url}` })
     })
   }
 
@@ -61,6 +74,6 @@ export class PluginPageSupport {
     if (resolver) {
       resolver(result)
     }
-    router.back()
+    PluginPageSupport.getRouter().back()
   }
 }

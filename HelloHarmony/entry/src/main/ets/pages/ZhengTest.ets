@@ -1,8 +1,28 @@
-import { HttpClientHolder, HttpMethod, HttpResponse } from '../network'
-import { hilog } from '@kit.PerformanceAnalysisKit'
-import { router } from '@kit.ArkUI'
+import { HttpClientHolder, HttpMethod } from '../network'
+import { RequestHelper } from '../utils/RequestHelper'
+import { StorageUtil, StorageKey } from '../utils/StorageUtil'
+import { TitleBar } from '../base/TitleBar'
+import { UserApi } from '../constants/ApiPaths'
 
 const TAG = 'ZhengTest'
+
+/** 用户信息 */
+interface UserInfo {
+  id: string
+  email: string
+  username: string
+  mobile: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+/** 登录响应 data */
+interface LoginData {
+  access_token: string
+  token_type: string
+  user: UserInfo
+}
 
 @Entry
 @Component
@@ -13,161 +33,165 @@ struct ZhengTest {
   @State result3: string = ''
   @State result4: string = ''
 
+  private client = HttpClientHolder.getInstance().getClient()
+
   build() {
     Column() {
-      // 顶部导航栏
-      Row() {
-        Text('< 返回')
-          .fontSize(16)
-          .fontColor('#007DFF')
-          .onClick(() => router.back())
-        Text('接口测试')
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .margin({ left: 16 })
-        Blank()
-        if (this.loading) {
-          LoadingProgress()
-            .width(20)
-            .height(20)
-            .color('#007DFF')
+      TitleBar({ title: '接口测试', showBack: true, showLoading: this.loading })
+
+      Scroll() {
+        Column({ space: 12 }) {
+          // 登录接口
+          Button('登录接口')
+            .width('100%')
+            .enabled(!this.loading)
+            .onClick(() => this.testLogin())
+
+          Text(this.result1)
+            .fontSize(13)
+            .fontColor('#333333')
+            .width('100%')
+            .maxLines(10)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .copyOption(CopyOptions.LocalDevice)
+
+          // 获取用户列表
+          Button('获取用户列表')
+            .width('100%')
+            .enabled(!this.loading)
+            .onClick(() => this.testUserList())
+
+          Text(this.result2)
+            .fontSize(13)
+            .fontColor('#333333')
+            .width('100%')
+            .maxLines(10)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .copyOption(CopyOptions.LocalDevice)
+
+          // 获取用户详情
+          Button('获取用户详情')
+            .width('100%')
+            .enabled(!this.loading)
+            .onClick(() => this.testUserDetail())
+
+          Text(this.result3)
+            .fontSize(13)
+            .fontColor('#333333')
+            .width('100%')
+            .maxLines(10)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .copyOption(CopyOptions.LocalDevice)
+
+          // 退出登录
+          Button('退出登录')
+            .width('100%')
+            .enabled(!this.loading)
+            .onClick(() => this.testLogout())
+
+          Text(this.result4)
+            .fontSize(13)
+            .fontColor('#333333')
+            .width('100%')
+            .maxLines(10)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .copyOption(CopyOptions.LocalDevice)
         }
+        .width('100%')
+        .padding(16)
       }
-      .width('100%')
-      .height(48)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor('#F5F5F5')
-
-      // 按钮区域
-      Column({ space: 12 }) {
-        Button('测试接口 1')
-          .width('100%')
-          .enabled(!this.loading)
-          .onClick(() => this.testApi1())
-
-        Text(this.result1)
-          .fontSize(13)
-          .fontColor('#333333')
-          .width('100%')
-          .maxLines(5)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-        Button('测试接口 2')
-          .width('100%')
-          .enabled(!this.loading)
-          .onClick(() => this.testApi2())
-
-        Text(this.result2)
-          .fontSize(13)
-          .fontColor('#333333')
-          .width('100%')
-          .maxLines(5)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-        Button('测试接口 3')
-          .width('100%')
-          .enabled(!this.loading)
-          .onClick(() => this.testApi3())
-
-        Text(this.result3)
-          .fontSize(13)
-          .fontColor('#333333')
-          .width('100%')
-          .maxLines(5)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-        Button('测试接口 4')
-          .width('100%')
-          .enabled(!this.loading)
-          .onClick(() => this.testApi4())
-
-        Text(this.result4)
-          .fontSize(13)
-          .fontColor('#333333')
-          .width('100%')
-          .maxLines(5)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .width('100%')
-      .padding(16)
+      .layoutWeight(1)
     }
     .width('100%')
     .height('100%')
   }
 
-  private async testApi1(): Promise<void> {
-    this.result1 = '请求中...'
-    this.loading = true
-    try {
-      // TODO: 替换为实际接口
-      const client = HttpClientHolder.getInstance().getClient()
-      const response: HttpResponse<Object> = await client
-        .newRequest('/api/v1/test1', { method: HttpMethod.GET })
+  /** 登录 */
+  private testLogin(): void {
+    RequestHelper.execute({
+      tag: TAG,
+      request: () => this.client
+        .newRequest(UserApi.LOGIN, {
+          method: HttpMethod.POST,
+          params: { 'identifier': '13013001300', 'password': 'nan234561' }
+        })
         .buildCall()
-        .execute<Object>()
-      this.result1 = `code=${response.code}, msg=${response.msg}, data=${JSON.stringify(response.data)}`
-    } catch (e) {
-      this.result1 = `异常: ${(e as Error).message}`
-      hilog.error(0, TAG, `testApi1 error: ${(e as Error).message}`)
-    } finally {
-      this.loading = false
-    }
+        .execute<LoginData>(),
+      onStart: () => { this.loading = true; this.result1 = '请求中...' },
+      onSuccess: (response) => {
+        const data = response.data
+        if (response.isSuccess() && data !== null) {
+          // 存储登录数据
+          StorageUtil.putObject<LoginData>(StorageKey.LOGIN_DATA, data)
+          StorageUtil.saveToken(data.access_token)
+          this.result1 =
+            `msg: ${response.msg}\n` +
+            `token: ${data.access_token}\n` +
+            `用户名: ${data.user.username}\n` +
+            `手机号: ${data.user.mobile}\n` +
+            `邮箱: ${data.user.email}`
+        } else {
+          this.result1 = `失败: ${response.msg}`
+        }
+      },
+      onError: (msg) => { this.result1 = `异常: ${msg}` },
+      onFinish: () => { this.loading = false }
+    })
   }
 
-  private async testApi2(): Promise<void> {
-    this.result2 = '请求中...'
-    this.loading = true
-    try {
-      // TODO: 替换为实际接口
-      const client = HttpClientHolder.getInstance().getClient()
-      const response: HttpResponse<Object> = await client
-        .newRequest('/api/v1/test2', { method: HttpMethod.GET })
+  /** 获取用户列表 */
+  private testUserList(): void {
+    RequestHelper.execute({
+      tag: TAG,
+      request: () => this.client
+        .newRequest(UserApi.USER_LIST, {
+          method: HttpMethod.GET,
+          params: { 'page': '1', 'page_size': '10' }
+        })
         .buildCall()
-        .execute<Object>()
-      this.result2 = `code=${response.code}, msg=${response.msg}, data=${JSON.stringify(response.data)}`
-    } catch (e) {
-      this.result2 = `异常: ${(e as Error).message}`
-      hilog.error(0, TAG, `testApi2 error: ${(e as Error).message}`)
-    } finally {
-      this.loading = false
-    }
+        .execute<Object>(),
+      onStart: () => { this.loading = true; this.result2 = '请求中...' },
+      onSuccess: (response) => {
+        this.result2 = `code: ${response.code}\nmsg: ${response.msg}\n${JSON.stringify(response.data)}`
+      },
+      onError: (msg) => { this.result2 = `异常: ${msg}` },
+      onFinish: () => { this.loading = false }
+    })
   }
 
-  private async testApi3(): Promise<void> {
-    this.result3 = '请求中...'
-    this.loading = true
-    try {
-      // TODO: 替换为实际接口
-      const client = HttpClientHolder.getInstance().getClient()
-      const response: HttpResponse<Object> = await client
-        .newRequest('/api/v1/test3', { method: HttpMethod.POST, params: {} })
+  /** 获取用户详情 */
+  private testUserDetail(): void {
+    RequestHelper.execute({
+      tag: TAG,
+      request: () => this.client
+        .newRequest(UserApi.USER_DETAIL.replace('{id}', '2'), {
+          method: HttpMethod.GET
+        })
         .buildCall()
-        .execute<Object>()
-      this.result3 = `code=${response.code}, msg=${response.msg}, data=${JSON.stringify(response.data)}`
-    } catch (e) {
-      this.result3 = `异常: ${(e as Error).message}`
-      hilog.error(0, TAG, `testApi3 error: ${(e as Error).message}`)
-    } finally {
-      this.loading = false
-    }
+        .execute<Object>(),
+      onStart: () => { this.loading = true; this.result3 = '请求中...' },
+      onSuccess: (response) => {
+        this.result3 = `code: ${response.code}\nmsg: ${response.msg}\n${JSON.stringify(response.data)}`
+      },
+      onError: (msg) => { this.result3 = `异常: ${msg}` },
+      onFinish: () => { this.loading = false }
+    })
   }
 
-  private async testApi4(): Promise<void> {
-    this.result4 = '请求中...'
-    this.loading = true
-    try {
-      // TODO: 替换为实际接口
-      const client = HttpClientHolder.getInstance().getClient()
-      const response: HttpResponse<Object> = await client
-        .newRequest('/api/v1/test4', { method: HttpMethod.POST, params: {} })
+  /** 退出登录 */
+  private testLogout(): void {
+    RequestHelper.execute({
+      tag: TAG,
+      request: () => this.client
+        .newRequest(UserApi.LOGOUT, { method: HttpMethod.POST })
         .buildCall()
-        .execute<Object>()
-      this.result4 = `code=${response.code}, msg=${response.msg}, data=${JSON.stringify(response.data)}`
-    } catch (e) {
-      this.result4 = `异常: ${(e as Error).message}`
-      hilog.error(0, TAG, `testApi4 error: ${(e as Error).message}`)
-    } finally {
-      this.loading = false
-    }
+        .execute<Object>(),
+      onStart: () => { this.loading = true; this.result4 = '请求中...' },
+      onSuccess: (response) => {
+        this.result4 = `code: ${response.code}\nmsg: ${response.msg}`
+      },
+      onError: (msg) => { this.result4 = `异常: ${msg}` },
+      onFinish: () => { this.loading = false }
+    })
   }
 }

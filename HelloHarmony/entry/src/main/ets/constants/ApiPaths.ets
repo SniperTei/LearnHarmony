@@ -10,3 +10,8 @@ export class UserApi {
   static readonly USER_DETAIL: string = '/api/v1/users/{id}'
   static readonly LOGOUT: string = '/api/v1/users/logout'
 }
+
+/** 设备认证相关 */
+export class DeviceApi {
+  static readonly PLUGIN_LIST: string = '/api/v1/device/plugins'
+}

@@ -1,6 +1,7 @@
 {
   "src": [
     "pages/Index",
+    "pages/DeviceAuth",
     "pages/ZhengTest",
     "pages/SplashPage",
     "plugins/camera/CameraPage",
