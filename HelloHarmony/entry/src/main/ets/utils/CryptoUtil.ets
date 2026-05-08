@@ -1,5 +1,6 @@
 import { cryptoFramework } from '@kit.CryptoArchitectureKit'
 import { buffer, util } from '@kit.ArkTS'
+import { PureCrypto } from './PureCrypto'
 
 /**
  * 加解密工具
@@ -26,7 +27,7 @@ export class CryptoUtil {
     return hex
   }
 
-  // ─── 哈希 ──────────────────────────────────
+  // ─── 哈希（系统 API，异步）──────────────────
 
   /** MD5 哈希，返回 32 位小写十六进制字符串 */
   static async md5(input: string): Promise<string> {
@@ -44,30 +45,25 @@ export class CryptoUtil {
     return CryptoUtil.uint8ArrayToHex(result.data)
   }
 
-  // ─── AES 加解密（暂未适配当前 SDK，待后续启用）───
-  // static async aesEncrypt(plaintext: string, key: string, iv: string): Promise<string> { ... }
-  // static async aesDecrypt(ciphertext: string, key: string, iv: string): Promise<string> { ... }
-
-  // ─── HMAC ──────────────────────────────────
+  // ─── HMAC（纯实现，同步，支持任意长度密钥）───
 
   /** HMAC-SHA256，返回十六进制字符串 */
-  static async hmacSha256(input: string, key: string): Promise<string> {
-    return CryptoUtil.hmac(input, key, 'SHA256')
+  static hmacSha256(input: string, key: string): string {
+    const result = PureCrypto.hmacSha256Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
+    return CryptoUtil.uint8ArrayToHex(result)
   }
 
   /** HMAC-SHA512，返回十六进制字符串 */
-  static async hmacSha512(input: string, key: string): Promise<string> {
-    return CryptoUtil.hmac(input, key, 'SHA512')
+  static hmacSha512(input: string, key: string): string {
+    const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
+    return CryptoUtil.uint8ArrayToHex(result)
   }
 
-  private static async hmac(input: string, key: string, algorithm: string): Promise<string> {
-    const mac = cryptoFramework.createMac(algorithm)
-    const keyGenerator = cryptoFramework.createSymKeyGenerator(`HMAC|${algorithm}`)
-    const symKey = await keyGenerator.convertKey({ data: CryptoUtil.strToUint8Array(key) })
-    await mac.init(symKey)
-    await mac.update({ data: CryptoUtil.strToUint8Array(input) })
-    const result = await mac.doFinal()
-    return CryptoUtil.uint8ArrayToHex(result.data)
+  /** HMAC-SHA512，返回 Base64 字符串（匹配 Android HmacSHA512 输出） */
+  static hmacSha512Base64(input: string, key: string): string {
+    const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
+    const helper = new util.Base64Helper()
+    return helper.encodeToStringSync(result)
   }
 
   // ─── Base64 ────────────────────────────────
@@ -83,17 +79,5 @@ export class CryptoUtil {
     const helper = new util.Base64Helper()
     const bytes = helper.decodeSync(input)
     return CryptoUtil.uint8ArrayToStr(bytes)
-  }
-
-  /** Uint8Array → Base64 字符串 */
-  private static base64EncodeBytes(data: Uint8Array): string {
-    const helper = new util.Base64Helper()
-    return helper.encodeToStringSync(data)
-  }
-
-  /** Base64 字符串 → Uint8Array */
-  private static base64DecodeBytes(input: string): Uint8Array {
-    const helper = new util.Base64Helper()
-    return helper.decodeSync(input)
   }
 }
