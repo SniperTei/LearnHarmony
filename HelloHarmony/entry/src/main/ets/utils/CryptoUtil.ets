@@ -15,10 +15,6 @@ export class CryptoUtil {
     return new Uint8Array(buf.buffer)
   }
 
-  private static uint8ArrayToStr(arr: Uint8Array): string {
-    return buffer.from(arr.buffer).toString('utf-8')
-  }
-
   private static uint8ArrayToHex(arr: Uint8Array): string {
     let hex = ''
     for (let i = 0; i < arr.length; i++) {
@@ -47,19 +43,13 @@ export class CryptoUtil {
 
   // ─── HMAC（纯实现，同步，支持任意长度密钥）───
 
-  /** HMAC-SHA256，返回十六进制字符串 */
-  static hmacSha256(input: string, key: string): string {
-    const result = PureCrypto.hmacSha256Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
-    return CryptoUtil.uint8ArrayToHex(result)
-  }
-
   /** HMAC-SHA512，返回十六进制字符串 */
   static hmacSha512(input: string, key: string): string {
     const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
     return CryptoUtil.uint8ArrayToHex(result)
   }
 
-  /** HMAC-SHA512，返回 Base64 字符串（匹配 Android HmacSHA512 输出） */
+  /** HMAC-SHA512，返回 Base64 字符串 */
   static hmacSha512Base64(input: string, key: string): string {
     const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
     const helper = new util.Base64Helper()
@@ -78,6 +68,6 @@ export class CryptoUtil {
   static base64Decode(input: string): string {
     const helper = new util.Base64Helper()
     const bytes = helper.decodeSync(input)
-    return CryptoUtil.uint8ArrayToStr(bytes)
+    return buffer.from(bytes.buffer).toString('utf-8')
   }
 }
