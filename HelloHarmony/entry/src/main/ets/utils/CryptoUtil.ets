@@ -1,6 +1,9 @@
 import { cryptoFramework } from '@kit.CryptoArchitectureKit'
 import { buffer, util } from '@kit.ArkTS'
 import { PureCrypto } from './PureCrypto'
+import { LogUtil } from './LogUtil'
+
+const TAG = 'CryptoUtil'
 
 /**
  * 加解密工具
@@ -25,49 +28,79 @@ export class CryptoUtil {
 
   // ─── 哈希（系统 API，异步）──────────────────
 
-  /** MD5 哈希，返回 32 位小写十六进制字符串 */
+  /** MD5 哈希，返回 32 位小写十六进制字符串，失败返回空字符串 */
   static async md5(input: string): Promise<string> {
-    const md = cryptoFramework.createMd('MD5')
-    await md.update({ data: CryptoUtil.strToUint8Array(input) })
-    const result = await md.digest()
-    return CryptoUtil.uint8ArrayToHex(result.data)
+    try {
+      const md = cryptoFramework.createMd('MD5')
+      await md.update({ data: CryptoUtil.strToUint8Array(input) })
+      const result = await md.digest()
+      return CryptoUtil.uint8ArrayToHex(result.data)
+    } catch (e) {
+      LogUtil.error(TAG, `md5 failed: ${(e as Error).message}`)
+      return ''
+    }
   }
 
-  /** SHA-256 哈希，返回 64 位小写十六进制字符串 */
+  /** SHA-256 哈希，返回 64 位小写十六进制字符串，失败返回空字符串 */
   static async sha256(input: string): Promise<string> {
-    const md = cryptoFramework.createMd('SHA256')
-    await md.update({ data: CryptoUtil.strToUint8Array(input) })
-    const result = await md.digest()
-    return CryptoUtil.uint8ArrayToHex(result.data)
+    try {
+      const md = cryptoFramework.createMd('SHA256')
+      await md.update({ data: CryptoUtil.strToUint8Array(input) })
+      const result = await md.digest()
+      return CryptoUtil.uint8ArrayToHex(result.data)
+    } catch (e) {
+      LogUtil.error(TAG, `sha256 failed: ${(e as Error).message}`)
+      return ''
+    }
   }
 
   // ─── HMAC（纯实现，同步，支持任意长度密钥）───
 
-  /** HMAC-SHA512，返回十六进制字符串 */
+  /** HMAC-SHA512，返回十六进制字符串，失败返回空字符串 */
   static hmacSha512(input: string, key: string): string {
-    const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
-    return CryptoUtil.uint8ArrayToHex(result)
+    try {
+      const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
+      return CryptoUtil.uint8ArrayToHex(result)
+    } catch (e) {
+      LogUtil.error(TAG, `hmacSha512 failed: ${(e as Error).message}`)
+      return ''
+    }
   }
 
-  /** HMAC-SHA512，返回 Base64 字符串 */
+  /** HMAC-SHA512，返回 Base64 字符串，失败返回空字符串 */
   static hmacSha512Base64(input: string, key: string): string {
-    const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
-    const helper = new util.Base64Helper()
-    return helper.encodeToStringSync(result)
+    try {
+      const result = PureCrypto.hmacSha512Bytes(CryptoUtil.strToUint8Array(key), CryptoUtil.strToUint8Array(input))
+      const helper = new util.Base64Helper()
+      return helper.encodeToStringSync(result)
+    } catch (e) {
+      LogUtil.error(TAG, `hmacSha512Base64 failed: ${(e as Error).message}`)
+      return ''
+    }
   }
 
   // ─── Base64 ────────────────────────────────
 
-  /** Base64 编码字符串 → 字符串 */
+  /** Base64 编码，失败返回空字符串 */
   static base64Encode(input: string): string {
-    const helper = new util.Base64Helper()
-    return helper.encodeToStringSync(CryptoUtil.strToUint8Array(input))
+    try {
+      const helper = new util.Base64Helper()
+      return helper.encodeToStringSync(CryptoUtil.strToUint8Array(input))
+    } catch (e) {
+      LogUtil.error(TAG, `base64Encode failed: ${(e as Error).message}`)
+      return ''
+    }
   }
 
-  /** Base64 解码字符串 → 字符串 */
+  /** Base64 解码，失败返回空字符串 */
   static base64Decode(input: string): string {
-    const helper = new util.Base64Helper()
-    const bytes = helper.decodeSync(input)
-    return buffer.from(bytes.buffer).toString('utf-8')
+    try {
+      const helper = new util.Base64Helper()
+      const bytes = helper.decodeSync(input)
+      return buffer.from(bytes.buffer).toString('utf-8')
+    } catch (e) {
+      LogUtil.error(TAG, `base64Decode failed: ${(e as Error).message}`)
+      return ''
+    }
   }
 }
