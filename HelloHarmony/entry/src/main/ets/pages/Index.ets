@@ -1,4 +1,4 @@
-import { HttpClient, HttpConfig, HttpMethod, HttpResponse, LogInterceptor, CommonHeaderInterceptor, HttpClientHolder } from '../network'
+import { HttpClient, HttpConfig, HttpMethod, HttpResponse, LogInterceptor, CommonHeaderInterceptor, HttpClientHolder } from 'network'
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { router } from '@kit.ArkUI'
 import { UserApi } from '../constants/ApiPaths'

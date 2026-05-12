@@ -1,4 +1,4 @@
-import { HttpClientHolder, HttpMethod } from '../network'
+import { HttpClientHolder, HttpMethod } from 'network'
 import { RequestHelper } from '../utils/RequestHelper'
 import { StorageUtil, StorageKey } from '../utils/StorageUtil'
 import { TitleBar } from '../base/TitleBar'

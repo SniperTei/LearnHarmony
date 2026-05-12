@@ -6,6 +6,7 @@
   "author": "",
   "license": "",
   "dependencies": {
+    "network": "file:../Network"
   }
 }
 

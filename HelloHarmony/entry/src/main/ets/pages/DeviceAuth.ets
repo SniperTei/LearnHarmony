@@ -1,4 +1,4 @@
-import { HttpClientHolder } from '../network'
+import { HttpClientHolder } from 'network'
 import { TitleBar } from '../base/TitleBar'
 import { LoadingOverlay } from '../base/PageStates'
 

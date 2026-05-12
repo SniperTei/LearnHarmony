@@ -1,4 +1,4 @@
-import { HttpResponse } from '../network'
+import { HttpResponse } from 'network'
 import { hilog } from '@kit.PerformanceAnalysisKit'
 
 /**

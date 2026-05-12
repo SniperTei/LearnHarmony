@@ -1,0 +1,9 @@
+{
+  "name": "network",
+  "version": "1.0.0",
+  "description": "Network library for HarmonyOS",
+  "main": "Index.ets",
+  "author": "",
+  "license": "",
+  "dependencies": {}
+}
