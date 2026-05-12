@@ -1,0 +1,8 @@
+# HarmonyOS build
+.hvigor/
+build/
+oh_modules/
+local.properties
+
+# IDE
+.idea/
