@@ -1,4 +1,5 @@
 import { HttpClientHolder } from 'network'
+import { common } from '@kit.AbilityKit'
 import { TitleBar } from '../base/TitleBar'
 import { LoadingOverlay } from '../base/PageStates'
 
@@ -25,6 +26,7 @@ struct DeviceAuth {
   @State showPluginSheet: boolean = false
   @State pluginList: PluginItem[] = []
   private client = HttpClientHolder.getInstance().getClient()
+  private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
 
   build() {
     Stack() {

@@ -2,7 +2,7 @@ import { PluginPageSupport } from '../core/PluginPageSupport'
 
 /**
  * 人脸识别页面
- * TODO: 实现活体检测 + 人脸比对
+ * TODO: 实现活体检测 + 人脸比对D
  */
 @Entry
 @Component

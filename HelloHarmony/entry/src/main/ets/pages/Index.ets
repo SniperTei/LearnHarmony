@@ -2,6 +2,8 @@ import { HttpClient, HttpConfig, HttpMethod, HttpResponse, LogInterceptor, Commo
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { router } from '@kit.ArkUI'
 import { UserApi } from '../constants/ApiPaths'
+import { VerifyDialog, VerifyDialogConfig } from '../components/VerifyDialog'
+import { QrScanCallback } from '../pages/QrScanPage'
 
 const TAG = 'Index'
 
@@ -53,7 +55,29 @@ struct Index {
   @State envSelected: boolean = false
   @State loading: boolean = false
   @State loginResult: string = ''
+  @State scanResult: string = ''
   private client: HttpClient | null = null
+  private verifyDialogConfig: VerifyDialogConfig = new VerifyDialogConfig()
+  private verifyDialogRef: VerifyDialog | null = null
+  dialogController: CustomDialogController = new CustomDialogController({
+    builder: VerifyDialog({
+      config: this.verifyDialogConfig,
+      onUmVerify: (account: string, password: string, captcha: string) => {
+        hilog.info(0, TAG, `UM验证: account=${account}, captcha=${captcha}`)
+        // TODO: 实际验证逻辑，模拟失败触发验证码
+        if (this.verifyDialogRef) {
+          this.verifyDialogRef.onPasswordFailed()
+        }
+      },
+      onFaceVerify: () => {
+        hilog.info(0, TAG, '人脸识别')
+        this.dialogController.close()
+      }
+    }),
+    alignment: DialogAlignment.Center,
+    customStyle: true,
+    backgroundColor: Color.Transparent
+  })
 
   aboutToAppear(): void {
     HttpClientHolder.getInstance().init(new HttpConfig(), [
@@ -62,6 +86,12 @@ struct Index {
     ])
     this.client = HttpClientHolder.getInstance().getClient()
     this.showEnvDialog()
+
+    // 注册扫码回调
+    QrScanCallback.callback = (value: string) => {
+      this.scanResult = value
+      hilog.info(0, TAG, `扫码结果: ${value}`)
+    }
   }
 
   build() {
@@ -87,6 +117,36 @@ struct Index {
         .fontSize(14)
         .margin({ left: 16, top: 8 })
         .onClick(() => router.pushUrl({ url: 'pages/ZhengTest' }))
+
+      // 设备认证入口
+      Button('设备认证')
+        .fontSize(14)
+        .margin({ left: 16, top: 8 })
+        .onClick(() => router.pushUrl({ url: 'pages/DeviceAuth' }))
+
+      // 扫码入口
+      Button('扫一扫')
+        .fontSize(14)
+        .margin({ left: 16, top: 8 })
+        .onClick(() => router.pushUrl({ url: 'pages/QrScanPage' }))
+
+      // 扫码结果
+      if (this.scanResult) {
+        Text(`扫码结果: ${this.scanResult}`)
+          .fontSize(13)
+          .fontColor('#333333')
+          .width('100%')
+          .padding({ left: 16, top: 8 })
+      }
+
+      // 身份验证弹窗测试
+      Button('身份验证弹窗')
+        .fontSize(14)
+        .margin({ left: 16, top: 8 })
+        .onClick(() => {
+          this.verifyDialogConfig.passwordFlag = 'Y'
+          this.dialogController.open()
+        })
 
       // 标题 + 按钮
       Row() {

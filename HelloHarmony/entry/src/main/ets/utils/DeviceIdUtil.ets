@@ -10,7 +10,6 @@ export class DeviceIdUtil {
 
   /**
    * 获取设备唯一 ID（首次自动生成并存储）
-   * app 卸载重装后返回相同的值
    */
   static async getDeviceId(): Promise<string> {
     if (DeviceIdUtil.cachedId) {
@@ -19,14 +18,20 @@ export class DeviceIdUtil {
 
     // 1. 尝试从 Asset Store 读取
     try {
-      const query = new Map<number, Uint8Array | boolean>()
+      const query: asset.AssetMap = new Map()
       query.set(asset.Tag.ALIAS, DeviceIdUtil.strToBytes(ALIAS))
-      const results = asset.query(query)
+      query.set(asset.Tag.RETURN_TYPE, asset.ReturnType.ALL as Object as Uint8Array)
+      const results = asset.querySync(query)
       if (results.length > 0) {
-        const secret = results[0].get(asset.Tag.SECRET) as Uint8Array
-        DeviceIdUtil.cachedId = DeviceIdUtil.bytesToStr(secret)
-        LogUtil.info(TAG, `从 Asset Store 读取到 deviceId: ${DeviceIdUtil.cachedId}`)
-        return DeviceIdUtil.cachedId
+        const first = results[0]
+        const secret = first.get(asset.Tag.SECRET) as Uint8Array
+        const id = DeviceIdUtil.bytesToStr(secret)
+        if (id.length > 0) {
+          DeviceIdUtil.cachedId = id
+          LogUtil.info(TAG, `读取到 deviceId: ${id}`)
+          return DeviceIdUtil.cachedId
+        }
+        asset.removeSync(query)
       }
     } catch (e) {
       LogUtil.info(TAG, 'Asset Store 中无记录，将生成新 ID')
@@ -35,15 +40,14 @@ export class DeviceIdUtil {
     // 2. 生成新 UUID 并存储
     const uuid = DeviceIdUtil.generateUUID()
     try {
-      const attrs = new Map<number, Uint8Array | boolean>()
+      const attrs: asset.AssetMap = new Map()
       attrs.set(asset.Tag.ALIAS, DeviceIdUtil.strToBytes(ALIAS))
       attrs.set(asset.Tag.SECRET, DeviceIdUtil.strToBytes(uuid))
       attrs.set(asset.Tag.IS_PERSISTENT, true)
-      asset.add(attrs)
+      asset.addSync(attrs)
       DeviceIdUtil.cachedId = uuid
       LogUtil.info(TAG, `生成并存储新 deviceId: ${uuid}`)
     } catch (e) {
-      // 存储失败仍返回 UUID（仅内存中有效）
       DeviceIdUtil.cachedId = uuid
       LogUtil.error(TAG, `Asset Store 存储失败: ${(e as Error).message}`)
     }
@@ -54,10 +58,11 @@ export class DeviceIdUtil {
   /** 生成 16 位随机 ID */
   private static generateUUID(): string {
     const chars = '0123456789abcdefghijklmnopqrstuvwxyz'
+    const charsArr = Array.from(chars)
     const id: string[] = []
     for (let i = 0; i < 16; i++) {
-      const idx = Math.floor(Math.random() * chars.length)
-      id.push(chars[idx])
+      const idx = Math.floor(Math.random() * charsArr.length)
+      id.push(charsArr[idx])
     }
     return id.join('')
   }
