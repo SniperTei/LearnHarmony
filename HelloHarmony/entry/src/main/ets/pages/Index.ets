@@ -1,9 +1,12 @@
 import { HttpClient, HttpConfig, HttpMethod, HttpResponse, LogInterceptor, CommonHeaderInterceptor, HttpClientHolder } from 'network'
+import { SNPRouter } from 'common'
 import { hilog } from '@kit.PerformanceAnalysisKit'
-import { router } from '@kit.ArkUI'
 import { UserApi } from '../constants/ApiPaths'
-import { VerifyDialog, VerifyDialogConfig } from '../components/VerifyDialog'
-import { QrScanCallback } from '../pages/QrScanPage'
+import { SNPPage } from '../router/SNPPage'
+import { DeviceAuth } from './DeviceAuth'
+import { QrScanPage } from './QrScanPage'
+import { ZhengTest } from './ZhengTest'
+import { SplashPage } from './SplashPage'
 
 const TAG = 'Index'
 
@@ -57,27 +60,7 @@ struct Index {
   @State loginResult: string = ''
   @State scanResult: string = ''
   private client: HttpClient | null = null
-  private verifyDialogConfig: VerifyDialogConfig = new VerifyDialogConfig()
-  private verifyDialogRef: VerifyDialog | null = null
-  dialogController: CustomDialogController = new CustomDialogController({
-    builder: VerifyDialog({
-      config: this.verifyDialogConfig,
-      onUmVerify: (account: string, password: string, captcha: string) => {
-        hilog.info(0, TAG, `UM验证: account=${account}, captcha=${captcha}`)
-        // TODO: 实际验证逻辑，模拟失败触发验证码
-        if (this.verifyDialogRef) {
-          this.verifyDialogRef.onPasswordFailed()
-        }
-      },
-      onFaceVerify: () => {
-        hilog.info(0, TAG, '人脸识别')
-        this.dialogController.close()
-      }
-    }),
-    alignment: DialogAlignment.Center,
-    customStyle: true,
-    backgroundColor: Color.Transparent
-  })
+  private navStack: NavPathStack = SNPRouter.getInstance().getStack()
 
   aboutToAppear(): void {
     HttpClientHolder.getInstance().init(new HttpConfig(), [
@@ -86,19 +69,14 @@ struct Index {
     ])
     this.client = HttpClientHolder.getInstance().getClient()
     this.showEnvDialog()
-
-    // 注册扫码回调
-    QrScanCallback.callback = (value: string) => {
-      this.scanResult = value
-      hilog.info(0, TAG, `扫码结果: ${value}`)
-    }
   }
 
   build() {
-    Column() {
-      // 顶部环境栏
-      Row() {
-        Text(`当前环境: ${this.currentEnv}`)
+    Navigation(this.navStack) {
+      Column() {
+        // 顶部环境栏
+        Row() {
+          Text(`当前环境: ${this.currentEnv}`)
           .fontSize(14)
           .fontColor('#666666')
         Blank()
@@ -116,36 +94,24 @@ struct Index {
       Button('接口测试')
         .fontSize(14)
         .margin({ left: 16, top: 8 })
-        .onClick(() => router.pushUrl({ url: 'pages/ZhengTest' }))
+        .onClick(() => SNPRouter.getInstance().forward(SNPPage.ZhengTest))
 
       // 设备认证入口
       Button('设备认证')
         .fontSize(14)
         .margin({ left: 16, top: 8 })
-        .onClick(() => router.pushUrl({ url: 'pages/DeviceAuth' }))
+        .onClick(() => SNPRouter.getInstance().forward(SNPPage.DeviceAuth))
 
-      // 扫码入口
+      // 扫码入口（带返回结果回调）
       Button('扫一扫')
         .fontSize(14)
         .margin({ left: 16, top: 8 })
-        .onClick(() => router.pushUrl({ url: 'pages/QrScanPage' }))
-
-      // 扫码结果
-      if (this.scanResult) {
-        Text(`扫码结果: ${this.scanResult}`)
-          .fontSize(13)
-          .fontColor('#333333')
-          .width('100%')
-          .padding({ left: 16, top: 8 })
-      }
-
-      // 身份验证弹窗测试
-      Button('身份验证弹窗')
-        .fontSize(14)
-        .margin({ left: 16, top: 8 })
         .onClick(() => {
-          this.verifyDialogConfig.passwordFlag = 'Y'
-          this.dialogController.open()
+          SNPRouter.getInstance().forward(SNPPage.QrScanPage, undefined, (result: Object) => {
+            const value = result as string
+            this.scanResult = value
+            hilog.info(0, TAG, `扫码结果: ${value}`)
+          })
         })
 
       // 标题 + 按钮
@@ -219,13 +185,32 @@ struct Index {
     }
     .width('100%')
     .height('100%')
+    }
+    .hideTitleBar(true)
+    .mode(NavigationMode.Stack)
+    .navDestination(this.PageMap)
+    .width('100%')
+    .height('100%')
+  }
+
+  /** 页面映射 @Builder（struct 方法，供 Navigation.navDestination 使用） */
+  @Builder
+  PageMap(name: string) {
+    if (name === SNPPage.DeviceAuth) {
+      DeviceAuth()
+    } else if (name === SNPPage.QrScanPage) {
+      QrScanPage()
+    } else if (name === SNPPage.ZhengTest) {
+      ZhengTest()
+    } else if (name === SNPPage.SplashPage) {
+      SplashPage()
+    }
   }
 
   /** 用户卡片 */
   @Builder
   UserCard(user: UserInfo) {
     Column() {
-      // 用户名 + 状态
       Row() {
         Text(user.username)
           .fontSize(16)
@@ -240,14 +225,12 @@ struct Index {
       }
       .width('100%')
 
-      // 邮箱
       Text(user.email)
         .fontSize(13)
         .fontColor('#666666')
         .margin({ top: 4 })
         .width('100%')
 
-      // 手机号
       if (user.mobile) {
         Text(user.mobile)
           .fontSize(13)

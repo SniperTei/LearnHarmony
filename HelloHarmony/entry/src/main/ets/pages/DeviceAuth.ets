@@ -18,9 +18,8 @@ interface PluginListData {
   plugins: PluginItem[]
 }
 
-@Entry
 @Component
-struct DeviceAuth {
+export struct DeviceAuth {
   @State loading: boolean = false
   @State authenticated: boolean = false
   @State showPluginSheet: boolean = false
@@ -29,9 +28,10 @@ struct DeviceAuth {
   private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
 
   build() {
-    Stack() {
-      Column() {
-        TitleBar({ title: '设备认证', showBack: true, showLoading: this.loading })
+    NavDestination() {
+      Stack() {
+        Column() {
+          TitleBar({ title: '设备认证', showBack: true, showLoading: this.loading })
 
         // 蓝色安全提示区域
         Column() {
@@ -122,6 +122,8 @@ struct DeviceAuth {
     }
     .width('100%')
     .height('100%')
+    }
+    .hideTitleBar(true)
   }
 
   /** 插件选择底部弹窗 */

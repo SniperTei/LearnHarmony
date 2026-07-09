@@ -1,3 +1,5 @@
+import { SNPRouter } from 'common'
+
 /**
  * 通用顶部导航栏
  * 支持标题、返回按钮、加载指示器
@@ -16,7 +18,7 @@ export struct TitleBar {
         Text('< 返回')
           .fontSize(16)
           .fontColor('#007DFF')
-          .onClick(() => this.getUIContext().getRouter().back())
+          .onClick(() => SNPRouter.getInstance().back())
       }
       Text(this.title)
         .fontSize(18)

@@ -24,9 +24,8 @@ interface LoginData {
   user: UserInfo
 }
 
-@Entry
 @Component
-struct ZhengTest {
+export struct ZhengTest {
   @State loading: boolean = false
   @State result1: string = ''
   @State result2: string = ''
@@ -36,8 +35,9 @@ struct ZhengTest {
   private client = HttpClientHolder.getInstance().getClient()
 
   build() {
-    Column() {
-      TitleBar({ title: '接口测试', showBack: true, showLoading: this.loading })
+    NavDestination() {
+      Column() {
+        TitleBar({ title: '接口测试', showBack: true, showLoading: this.loading })
 
       Scroll() {
         Column({ space: 12 }) {
@@ -104,6 +104,8 @@ struct ZhengTest {
     }
     .width('100%')
     .height('100%')
+    }
+    .hideTitleBar(true)
   }
 
   /** 登录 */
