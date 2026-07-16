@@ -7,6 +7,9 @@ import { DeviceAuth } from './DeviceAuth'
 import { QrScanPage } from './QrScanPage'
 import { ZhengTest } from './ZhengTest'
 import { SplashPage } from './SplashPage'
+import { PluginPicker, PluginPickerConfig, PluginOption } from '../components/PluginPicker'
+import { PopupUtil } from '../popup/PopupUtil'
+import { HelloDialogBuilder, HelloDialogData } from '../popup/builders/HelloDialogBuilder'
 
 const TAG = 'Index'
 
@@ -59,6 +62,20 @@ struct Index {
   @State loading: boolean = false
   @State loginResult: string = ''
   @State scanResult: string = ''
+  @State showPicker: boolean = false
+  // 10 个插件用于验证滚动（2 列 × 4 行 = 8 项，超过即滚动）
+  @State plugins: PluginOption[] = [
+    new PluginOption('zhengnan', '插件A'),
+    new PluginOption('zhengbei', '插件B'),
+    new PluginOption('face', '人脸识别'),
+    new PluginOption('signature', '电子签名'),
+    new PluginOption('camera', '相机'),
+    new PluginOption('cardreader', '读卡器'),
+    new PluginOption('video', '视频录制'),
+    new PluginOption('deviceauth', '设备认证'),
+    new PluginOption('keyboard', '密码键盘'),
+    new PluginOption('extra', '插件十号'),
+  ]
   private client: HttpClient | null = null
   private navStack: NavPathStack = SNPRouter.getInstance().getStack()
 
@@ -68,10 +85,15 @@ struct Index {
       new LogInterceptor(),
     ])
     this.client = HttpClientHolder.getInstance().getClient()
+    // 注入 UIContext 给 PopupUtil（让任意类能弹窗）
+    PopupUtil.getInstance().init(this.getUIContext())
+    // 注册 HelloDialog
+    PopupUtil.getInstance().register('helloDialog', new HelloDialogBuilder())
     this.showEnvDialog()
   }
 
   build() {
+    Stack() {
     Navigation(this.navStack) {
       Column() {
         // 顶部环境栏
@@ -111,6 +133,33 @@ struct Index {
             const value = result as string
             this.scanResult = value
             hilog.info(0, TAG, `扫码结果: ${value}`)
+          })
+        })
+
+      // 选择插件入口
+      Button('选择插件')
+        .fontSize(14)
+        .margin({ left: 16, top: 8 })
+        .onClick(() => { this.showPicker = true })
+
+      // PopupUtil 测试入口
+      Button('Hello Dialog')
+        .fontSize(14)
+        .margin({ left: 16, top: 8 })
+        .onClick(() => {
+          PopupUtil.getInstance().show<HelloDialogData>('helloDialog', {
+            data: {
+              title: 'Hello Dialog',
+              message: '这是一个通过 PopupUtil 弹出的自定义弹窗\n在任意类里都能调。',
+              confirmText: '知道了',
+              cancelText: '关闭'
+            },
+            onConfirm: () => {
+              hilog.info(0, TAG, `HelloDialog onConfirm`)
+            },
+            onCancel: (reason: string) => {
+              hilog.info(0, TAG, `HelloDialog onCancel: ${reason}`)
+            }
           })
         })
 
@@ -189,6 +238,24 @@ struct Index {
     .hideTitleBar(true)
     .mode(NavigationMode.Stack)
     .navDestination(this.PageMap)
+    .width('100%')
+    .height('100%')
+
+    // 插件选择弹窗（覆盖在最上层）
+    PluginPicker({
+      show: this.showPicker,
+      config: new PluginPickerConfig(),
+      plugins: this.plugins,
+      onConfirm: (pluginId: string) => {
+        this.showPicker = false
+        this.message = `选中插件: ${pluginId}`
+        hilog.info(0, TAG, `选中插件: ${pluginId}`)
+      },
+      onCancel: () => {
+        this.showPicker = false
+      }
+    })
+    }
     .width('100%')
     .height('100%')
   }

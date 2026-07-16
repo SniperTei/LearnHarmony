@@ -74,8 +74,11 @@ export class SNPRouter {
    * @return true=已存在并提到栈顶，false=栈里没有，走 forward 新推
    */
   moveToTop(name: string, param?: Object, onPop?: (result: Object) => void): boolean {
-    const found: boolean = this.stack.moveToTop(name)
-    if (!found) {
+    // NavPathStack.moveToTop 返回 void，需手动查栈判断是否存在
+    const found: boolean = this.stack.getAllPathName().includes(name)
+    if (found) {
+      this.stack.moveToTop(name)
+    } else {
       this.forward(name, param, onPop)
     }
     return found

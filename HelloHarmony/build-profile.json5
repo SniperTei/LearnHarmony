@@ -53,6 +53,10 @@
     {
       "name": "Common",
       "srcPath": "./Common",
+    },
+    {
+      "name": "Hybrid",
+      "srcPath": "./Hybrid",
     }
   ]
 }
